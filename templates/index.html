@@ -41,7 +41,7 @@
         </div>
         <div class="mb-3">
             <label for="file_upload" class="form-label">Загрузить список участников (файл)</label>
-            <input type="file" class="form-control" id="file_upload" name="file_upload" accept=".txt,.csv" required>
+            <input type="file" class="form-control" id="file_upload" name="file_upload" accept=".txt,.csv">
             <div class="form-text">
                 Загрузите файл в формате .txt или .csv
             </div>
@@ -52,7 +52,7 @@
 
     <div class="mt-4">
         <h3>Предпросмотр сертификата</h3>
-        <img id="previewImage" src="" alt="Preview" style="max-width: 100%; display: none;">
+        <img id="previewImage" src="{{ preview_image }}" alt="Preview" style="max-width: 100%; display: none;">
     </div>
 </div>
 
@@ -63,13 +63,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {{ error_message }}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeErrorModal">ОК</button>
             </div>
         </div>
     </div>
@@ -77,52 +74,46 @@
 {% endif %}
 
 <script>
-    // Закрытие модального окна по кнопке "ОК" или крестик
-    document.addEventListener("DOMContentLoaded", function () {
-        const errorMessage = "{{ error_message }}";
-        if (errorMessage) {
-            const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
-            errorModal.show();
+    document.getElementById('previewButton').addEventListener('click', function() {
+        var userNames = document.getElementById('user_names').value.trim();
+        var courseTitle = document.getElementById('course_title').value.trim();
+        var issueDate = document.getElementById('issue_date').value.trim();
+        var orientation = document.getElementById('orientation').value;
+        var template = document.getElementById('template').files[0];
 
-            // Закрытие модального окна по кнопке "ОК"
-            document.getElementById("closeErrorModal").addEventListener("click", function () {
-                errorModal.hide();
-            });
+        if (!userNames || !courseTitle || !issueDate) {
+            alert("Пожалуйста, заполните все обязательные поля.");
+            return;
         }
 
-        // Проверка расширения файла при загрузке
-        document.getElementById("certificateForm").addEventListener("submit", function(event) {
-            const fileInput = document.getElementById("file_upload");
-            const file = fileInput.files[0];
-            const fileName = file.name;
-            const fileExtension = fileName.split(".").pop().toLowerCase();
+        var formData = new FormData();
+        formData.append("user_names", userNames);
+        formData.append("course_title", courseTitle);
+        formData.append("issue_date", issueDate);
+        formData.append("orientation", orientation);
+        if (template) {
+            formData.append("template", template);
+        }
 
-            if (fileExtension !== "txt" && fileExtension !== "csv") {
-                alert("Ошибка! Пожалуйста, загрузите файл в формате .txt или .csv.");
-                event.preventDefault();  // Останавливаем отправку формы
+        fetch("/preview", {
+            method: "POST",
+            body: formData
+        }).then(function(response) {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Ошибка при генерации предпросмотра.');
             }
-        });
-
-        // Обработчик предпросмотра
-        document.getElementById("previewButton").addEventListener("click", function() {
-            const formData = new FormData(document.querySelector("form"));
-            
-            fetch("/preview", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.blob())
-            .then(imageBlob => {
-                const imageUrl = URL.createObjectURL(imageBlob);
-                const previewImage = document.getElementById("previewImage");
-                previewImage.src = imageUrl;
-                previewImage.style.display = "block"; // Показываем изображение
-            })
-            .catch(error => {
-                alert("Ошибка при генерации предпросмотра");
-            });
+        }).then(function(blob) {
+            var previewImage = document.getElementById('previewImage');
+            var url = URL.createObjectURL(blob);
+            previewImage.src = url;
+            previewImage.style.display = "block";
+        }).catch(function(error) {
+            alert(error.message);
         });
     });
 </script>
+
 </body>
 </html>
