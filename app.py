@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import tempfile
 from zipfile import ZipFile
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -60,11 +61,20 @@ def generate_certificate_with_image(user_name, course_title, issue_date, templat
     draw = ImageDraw.Draw(img)
 
     # Шрифты
-    font_regular = ImageFont.truetype(f"{FONTS_FOLDER}/OpenSans-Regular.ttf", 40)
-    font_bold = ImageFont.truetype(f"{FONTS_FOLDER}/OpenSans-Bold.ttf", 50)
+    font_regular = ImageFont.truetype(f"{FONTS_FOLDER}/OpenSans-Regular.ttf", 80)
+    font_bold = ImageFont.truetype(f"{FONTS_FOLDER}/OpenSans-Bold.ttf", 90)
+    font_header = ImageFont.truetype(f"{FONTS_FOLDER}/OpenSans-Bold.ttf", 120)
 
     # Цвет текста
     text_color = (0, 0, 0)  # Черный
+    accent_color = (33, 150, 243)  # Синий для акцентов
+
+     # Преобразование даты в формат "день.месяц.год"
+    try:
+        issue_date_obj = datetime.strptime(issue_date, '%Y-%m-%d')
+        formatted_date = issue_date_obj.strftime('%d.%m.%Y')
+    except ValueError:
+        formatted_date = issue_date  # В случае ошибки сохраняем как есть
 
     # Определяем пол участника
     gender = determine_gender(user_name)
@@ -81,11 +91,13 @@ def generate_certificate_with_image(user_name, course_title, issue_date, templat
         # Нейтральная формулировка
         draw.text((400, 800), "Данный сертификат подтверждает успешное завершение курса", font=font_regular, fill=text_color)
         draw.text((400, 1000), f"Слушатель: {user_name}", font=font_regular, fill=text_color)
+        draw.text((400, 1200), course_title, font=font_bold, fill=accent_color)
+        draw.text((400, 2000), f"Дата выдачи: {formatted_date}", font=font_regular, fill=text_color)
     else:
         draw.text((400, 800), "Этот сертификат подтверждает, что", font=font_regular, fill=text_color)
         draw.text((400, 1000), f"{user_name} {course_status}:", font=font_regular, fill=text_color)
-        draw.text((400, 1100), course_title, font=font_bold, fill=text_color)
-        draw.text((400, 2000), f"Дата выдачи: {issue_date}", font=font_regular, fill=text_color)
+        draw.text((400, 1200), course_title, font=font_bold, fill=accent_color)
+        draw.text((400, 2000), f"Дата выдачи: {formatted_date}", font=font_regular, fill=text_color)
 
     # Сохраняем результат
     img.save(output_filename)
@@ -147,5 +159,51 @@ def index():
 
     return render_template("index.html", error_message=error_message)
 
+@app.route("/preview", methods=["POST"])
+def preview():
+    try:
+        # Получаем данные с формы
+        orientation = request.form.get("orientation", "vertical")
+        course_title = request.form["course_title"]
+        issue_date = request.form["issue_date"]
+        user_name = request.form["user_names"].strip()
+        
+        # Загрузка шаблона
+        template_file = request.files.get("template")
+        if template_file:
+            template_path = os.path.join(TEMPLATES_FOLDER, template_file.filename)
+            template_file.save(template_path)
+        else:
+            template_path = os.path.join(TEMPLATES_FOLDER, "default_template.jpg")
+        
+        # Генерация сертификата для предпросмотра
+        output_filename = tempfile.mktemp(suffix=".jpg")
+        generate_certificate_with_image(user_name, course_title, issue_date, template_path, output_filename)
+        
+        return send_file(output_filename, mimetype='image/jpeg')
+        
+    except Exception as e:
+        return f"Error generating preview: {str(e)}"
+
+@app.route("/", methods=["POST"])
+def generate_certificates():
+    file = request.files.get("file_upload")
+    
+    if file:
+        # Проверка расширения файла
+        filename = file.filename
+        allowed_extensions = {'txt', 'csv'}
+        file_extension = filename.rsplit('.', 1)[-1].lower()
+        
+        if file_extension not in allowed_extensions:
+            error_message = "Пожалуйста, загрузите файл в формате .txt или .csv."
+            return render_template("index.html", error_message=error_message)
+
+        # Обработка файла
+        file.save(os.path.join("uploads", filename))
+        # Продолжить обработку...
+    
+    return render_template("index.html")
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5001)))
