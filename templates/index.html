@@ -10,9 +10,9 @@
 <body>
 <div class="container mt-5">
     <h1 class="text-center mb-4">Генерация сертификатов</h1>
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" id="certificateForm">
         <div class="mb-3">
-            <label for="user_names" class="form-label">Имена участников (через запятую)</label>
+            <label for="user_names" class="form-label">Имя участника (если участников несколько, то укажите их через запятую)</label>
             <textarea class="form-control" id="user_names" name="user_names" rows="3"></textarea>
         </div>
         <div class="mb-3">
@@ -24,50 +24,105 @@
             <input type="date" class="form-control" id="issue_date" name="issue_date" required>
         </div>
         <div class="mb-3">
-            <label for="orientation" class="form-label">Ориентация макета</label>
+            <label for="orientation" class="form-label">Ориентация макета (по умолчанию альбомная)</label>
             <select class="form-select" id="orientation" name="orientation">
-                <option value="horizontal">Горизонтальная</option>
-                <option value="vertical">Вертикальная</option>
+                <option value="horizontal">Альбомная</option>
+                <option value="vertical">Книжная</option>
             </select>
         </div>
         <div class="mb-3">
             <label for="template" class="form-label">Загрузить шаблон макета</label>
             <input type="file" class="form-control" id="template" name="template">
             <div class="form-text">
-                Для вертикальной ориентации требуется размер (2480, 3508) пикселей.<br>
-                Для горизонтальной ориентации требуется размер (3508, 2480) пикселей.
+                Для книжной ориентации требуется размер (2480, 3508) пикселей.<br>
+                Для альбомной ориентации требуется размер (3508, 2480) пикселей.<br>
+                Формат файлов: png, jpg
             </div>
         </div>
         <div class="mb-3">
             <label for="file_upload" class="form-label">Загрузить список участников (файл)</label>
-            <input type="file" class="form-control" id="file_upload" name="file_upload" accept=".txt">
+            <input type="file" class="form-control" id="file_upload" name="file_upload" accept=".txt,.csv" required>
+            <div class="form-text">
+                Загрузите файл в формате .txt или .csv
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Сгенерировать сертификаты</button>
+        <button type="button" class="btn btn-secondary" id="previewButton">Предпросмотр</button>
     </form>
+
+    <div class="mt-4">
+        <h3>Предпросмотр сертификата</h3>
+        <img id="previewImage" src="" alt="Preview" style="max-width: 100%; display: none;">
+    </div>
 </div>
 
- <!-- Модальное окно для отображения ошибки -->
-    {% if error_message %}
-    <div class="modal fade show" id="errorModal" tabindex="-1" style="display:block;" aria-labelledby="errorModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                </div>
-                <div class="modal-body">
-                    {{ error_message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ОК</button>
-                </div>
+<!-- Модальное окно для отображения ошибки -->
+{% if error_message %}
+<div class="modal fade show" id="errorModal" tabindex="-1" style="display:block;" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Ошибка</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                {{ error_message }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeErrorModal">ОК</button>
             </div>
         </div>
     </div>
-    {% endif %}
+</div>
+{% endif %}
+
+<script>
+    // Закрытие модального окна по кнопке "ОК" или крестик
+    document.addEventListener("DOMContentLoaded", function () {
+        const errorMessage = "{{ error_message }}";
+        if (errorMessage) {
+            const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
+            errorModal.show();
+
+            // Закрытие модального окна по кнопке "ОК"
+            document.getElementById("closeErrorModal").addEventListener("click", function () {
+                errorModal.hide();
+            });
+        }
+
+        // Проверка расширения файла при загрузке
+        document.getElementById("certificateForm").addEventListener("submit", function(event) {
+            const fileInput = document.getElementById("file_upload");
+            const file = fileInput.files[0];
+            const fileName = file.name;
+            const fileExtension = fileName.split(".").pop().toLowerCase();
+
+            if (fileExtension !== "txt" && fileExtension !== "csv") {
+                alert("Ошибка! Пожалуйста, загрузите файл в формате .txt или .csv.");
+                event.preventDefault();  // Останавливаем отправку формы
+            }
+        });
+
+        // Обработчик предпросмотра
+        document.getElementById("previewButton").addEventListener("click", function() {
+            const formData = new FormData(document.querySelector("form"));
+            
+            fetch("/preview", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.blob())
+            .then(imageBlob => {
+                const imageUrl = URL.createObjectURL(imageBlob);
+                const previewImage = document.getElementById("previewImage");
+                previewImage.src = imageUrl;
+                previewImage.style.display = "block"; // Показываем изображение
+            })
+            .catch(error => {
+                alert("Ошибка при генерации предпросмотра");
+            });
+        });
+    });
+</script>
 </body>
 </html>
-
-<!-- Подключение Bootstrap JS -->
-<script>
-    document
