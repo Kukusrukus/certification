@@ -18,6 +18,31 @@ if not os.path.exists(CERTIFICATES_FOLDER):
 if not os.path.exists(TEMPLATES_FOLDER):
     os.makedirs(TEMPLATES_FOLDER)
 
+# Списки популярных мужских и женских имен
+male_names = [
+    "Анатолий", "Алексей", "Александр", "Дмитрий", "Иван", "Михаил", "Тигран", "Владимир", "Евгений", "Сергей",
+    "Петр", "Константин", "Никита", "Андрей", "Роман", "Геннадий", "Вячеслав", "Виталий", "Олег", "Валерий",
+    "Станислав", "Ярослав", "Леонид", "Максим", "Игорь", "Юрий", "Артем", "Егор", "Аркадий", "Денис", "Кирилл"
+]
+
+female_names = [
+    "Ольга", "Марина", "Ирина", "Анна", "Елена", "Наталья", "Татьяна", "Юлия", "Светлана", "Людмила", "Виктория",
+    "Дарина", "София", "Анастасия", "Алла", "Ксения", "Вероника", "Милана", "Римма", "Евгения", "Елизавета", 
+    "Кристина", "Оксана", "Лариса", "Снежана", "Зоя", "Валентина", "Маргарита", "Марина", "Полина", "Нина",
+    "Людмила", "Валерия", "Алина", "Алиса", "Галина", "Римма", "Алена", "Юлия", "Диана", "Надежда", "София",
+    "Яна", "Тамара", "Нина", "Екатерина"
+]
+
+def determine_gender(name):
+    """Определяем пол по имени."""
+    name = name.split()[0]  # Используем первое имя
+    if name in male_names:
+        return 'male'
+    elif name in female_names:
+        return 'female'
+    else:
+        return 'unknown'  # Если пол не определен
+
 def validate_template_size(template_path, orientation):
     """Проверка размеров изображения."""
     expected_size = (2480, 3508) if orientation == "vertical" else (3508, 2480)
@@ -41,11 +66,26 @@ def generate_certificate_with_image(user_name, course_title, issue_date, templat
     # Цвет текста
     text_color = (0, 0, 0)  # Черный
 
+    # Определяем пол участника
+    gender = determine_gender(user_name)
+
+    if gender == 'male':
+        course_status = "успешно завершил курс"
+    elif gender == 'female':
+        course_status = "успешно завершила курс"
+    else:
+        course_status = "успешно завершил курс"  # Для неопределённого пола
+
     # Текст
-    draw.text((400, 800), "Этот сертификат подтверждает, что", font=font_regular, fill=text_color)
-    draw.text((400, 1000), f"{user_name} успешно завершил курс:", font=font_regular, fill=text_color)
-    draw.text((400, 1100), course_title, font=font_bold, fill=text_color)
-    draw.text((400, 2000), f"Дата выдачи: {issue_date}", font=font_regular, fill=text_color)
+    if gender == 'unknown':
+        # Нейтральная формулировка
+        draw.text((400, 800), "Данный сертификат подтверждает успешное завершение курса", font=font_regular, fill=text_color)
+        draw.text((400, 1000), f"Слушатель: {user_name}", font=font_regular, fill=text_color)
+    else:
+        draw.text((400, 800), "Этот сертификат подтверждает, что", font=font_regular, fill=text_color)
+        draw.text((400, 1000), f"{user_name} {course_status}:", font=font_regular, fill=text_color)
+        draw.text((400, 1100), course_title, font=font_bold, fill=text_color)
+        draw.text((400, 2000), f"Дата выдачи: {issue_date}", font=font_regular, fill=text_color)
 
     # Сохраняем результат
     img.save(output_filename)
