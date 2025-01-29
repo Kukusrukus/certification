@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 import tempfile
 from zipfile import ZipFile
-from datetime import datetime
 
 app = Flask(__name__)
 
@@ -69,7 +68,7 @@ def generate_certificate_with_image(user_name, course_title, issue_date, templat
     text_color = (0, 0, 0)  # Черный
     accent_color = (33, 150, 243)  # Синий для акцентов
 
-     # Преобразование даты в формат "день.месяц.год"
+    # Преобразование даты в формат "день.месяц.год"
     try:
         issue_date_obj = datetime.strptime(issue_date, '%Y-%m-%d')
         formatted_date = issue_date_obj.strftime('%d.%m.%Y')
@@ -105,6 +104,7 @@ def generate_certificate_with_image(user_name, course_title, issue_date, templat
 @app.route("/", methods=["GET", "POST"])
 def index():
     error_message = None
+    preview_image = None
 
     if request.method == "POST":
         try:
@@ -129,10 +129,14 @@ def index():
             if file_upload:
                 file_content = file_upload.read().decode("utf-8")
                 user_names = [line.strip() for line in file_content.splitlines() if line.strip()]
-            else:
+            elif request.form["user_names"]:
                 user_names = request.form["user_names"].split(",")
-
+            
             pdf_files = []
+            # Если поле для имен пустое, то обрабатываем только загрузку файла
+            if not user_names and not file_upload:
+                error_message = "Пожалуйста, укажите участников для генерации сертификатов."
+                return render_template("index.html", error_message=error_message, preview_image=preview_image)
 
             # Генерация сертификатов
             for user_name in user_names:
@@ -157,7 +161,7 @@ def index():
         except ValueError as e:
             error_message = str(e)
 
-    return render_template("index.html", error_message=error_message)
+    return render_template("index.html", error_message=error_message, preview_image=preview_image)
 
 @app.route("/preview", methods=["POST"])
 def preview():
@@ -185,25 +189,5 @@ def preview():
     except Exception as e:
         return f"Error generating preview: {str(e)}"
 
-@app.route("/", methods=["POST"])
-def generate_certificates():
-    file = request.files.get("file_upload")
-    
-    if file:
-        # Проверка расширения файла
-        filename = file.filename
-        allowed_extensions = {'txt', 'csv'}
-        file_extension = filename.rsplit('.', 1)[-1].lower()
-        
-        if file_extension not in allowed_extensions:
-            error_message = "Пожалуйста, загрузите файл в формате .txt или .csv."
-            return render_template("index.html", error_message=error_message)
-
-        # Обработка файла
-        file.save(os.path.join("uploads", filename))
-        # Продолжить обработку...
-    
-    return render_template("index.html")
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(debug=True)
