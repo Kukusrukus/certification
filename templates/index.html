@@ -26,8 +26,8 @@
         <div class="mb-3">
             <label for="orientation" class="form-label">Ориентация макета</label>
             <select class="form-select" id="orientation" name="orientation">
-                <option value="vertical">Вертикальная</option>
                 <option value="horizontal">Горизонтальная</option>
+                <option value="vertical">Вертикальная</option>
             </select>
         </div>
         <div class="mb-3">
@@ -70,13 +70,4 @@
 
 <!-- Подключение Bootstrap JS -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const errorMessage = "{{ error_message }}";
-        if (errorMessage) {
-            const errorModal = new bootstrap.Modal(document.getElementById("errorModal"));
-            errorModal.show();
-        }
-    });
-</script>
-</body>
-</html>
+    document
