@@ -7,57 +7,82 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-<body>
+<body class="bg-light">
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Генерация сертификатов</h1>
-    <form method="POST" enctype="multipart/form-data" id="certificateForm">
-        <div class="mb-3">
-            <label for="user_names" class="form-label">Имя участника (если участников несколько, то укажите их через запятую)</label>
-            <textarea class="form-control" id="user_names" name="user_names" rows="3"></textarea>
-        </div>
-        <div class="mb-3">
-            <label for="course_title" class="form-label">Название курса</label>
-            <input type="text" class="form-control" id="course_title" name="course_title" required>
-        </div>
-        <div class="mb-3">
-            <label for="issue_date" class="form-label">Дата выдачи</label>
-            <input type="date" class="form-control" id="issue_date" name="issue_date" required>
-        </div>
-        <div class="mb-3">
-            <label for="orientation" class="form-label">Ориентация макета (по умолчанию альбомная)</label>
-            <select class="form-select" id="orientation" name="orientation">
-                <option value="horizontal">Альбомная</option>
-                <option value="vertical">Книжная</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="template" class="form-label">Загрузить шаблон макета</label>
-            <input type="file" class="form-control" id="template" name="template">
-            <div class="form-text">
-                Для книжной ориентации требуется размер (2480, 3508) пикселей.<br>
-                Для альбомной ориентации требуется размер (3508, 2480) пикселей.<br>
-                Формат файлов: png, jpg
-            </div>
-        </div>
-        <div class="mb-3">
-            <label for="file_upload" class="form-label">Загрузить список участников (файл)</label>
-            <input type="file" class="form-control" id="file_upload" name="file_upload" accept=".txt,.csv">
-            <div class="form-text">
-                Загрузите файл в формате .txt или .csv
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Сгенерировать сертификаты</button>
-        <button type="button" class="btn btn-secondary" id="previewButton">Предпросмотр</button>
-    </form>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h1 class="text-center mb-4 text-primary">Генерация сертификатов</h1>
+            <form method="POST" enctype="multipart/form-data" id="certificateForm">
+                <!-- Раздел: Информация о курсе -->
+                <div class="mb-4">
+                    <h4 class="text-secondary">📘 Информация о курсе</h4>
+                    <div class="mb-3">
+                        <label for="course_title" class="form-label">Название курса</label>
+                        <input type="text" class="form-control" id="course_title" name="course_title" required placeholder="Например: Основы программирования">
+                    </div>
+                    <div class="mb-3">
+                        <label for="issue_date" class="form-label">Дата выдачи</label>
+                        <input type="date" class="form-control" id="issue_date" name="issue_date" required>
+                    </div>
+                </div>
+                
+                <!-- Раздел: Участники -->
+                <div class="mb-4">
+                    <h4 class="text-secondary">👥 Участники</h4>
+                    <div class="mb-3">
+                        <label for="user_names" class="form-label">Имена участников</label>
+                        <textarea class="form-control" id="user_names" name="user_names" rows="3" placeholder="Введите имена через запятую, например: Иван Иванов, Анна Петрова"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="file_upload" class="form-label">Или загрузите файл со списком участников</label>
+                        <input type="file" class="form-control" id="file_upload" name="file_upload" accept=".txt,.csv">
+                        <div class="form-text">
+                            Поддерживаются файлы формата <code>.txt</code> или <code>.csv</code>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="mt-4">
-        <h3>Предпросмотр сертификата</h3>
-        <img id="previewImage" src="{{ preview_image }}" alt="Preview" style="max-width: 100%; display: none;">
+                <!-- Раздел: Шаблон -->
+                <div class="mb-4">
+                    <h4 class="text-secondary">🖼️ Шаблон</h4>
+                    <div class="mb-3">
+                        <label for="orientation" class="form-label">Ориентация макета</label>
+                        <select class="form-select" id="orientation" name="orientation">
+                            <option value="horizontal">Альбомная</option>
+                            <option value="vertical">Книжная</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="template" class="form-label">Загрузить шаблон макета</label>
+                        <input type="file" class="form-control" id="template" name="template" accept=".jpg,.png">
+                        <div class="form-text">
+                            Для альбомной ориентации: <code>3508x2480 пикселей</code>, для книжной: <code>2480x3508 пикселей</code>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопки -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">Сгенерировать сертификаты</button>
+                    <button type="button" class="btn btn-secondary btn-lg" id="previewButton">Предпросмотр</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Предпросмотр -->
+    <div class="card mt-5 shadow-sm">
+        <div class="card-body text-center">
+            <h4 class="text-secondary">📋 Предпросмотр сертификата</h4>
+            <div id="loadingSpinner" class="spinner-border text-primary" style="display: none;" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <img id="previewImage" src="#" alt="Предпросмотр сертификата" class="img-fluid mt-3" style="display: none; max-height: 500px;">
+        </div>
     </div>
 </div>
 
-<!-- Модальное окно для отображения ошибки -->
-{% if error_message %}
+<!-- Модальное окно для ошибки -->
 <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -66,15 +91,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                {{ error_message }}
+                <p id="error-message"></p> <!-- Место для сообщения об ошибке -->
             </div>
         </div>
     </div>
 </div>
-{% endif %}
 
 <script>
-    document.getElementById('previewButton').addEventListener('click', function() {
+    // Предпросмотр сертификата
+    document.getElementById('previewButton').addEventListener('click', function () {
         var userNames = document.getElementById('user_names').value.trim();
         var courseTitle = document.getElementById('course_title').value.trim();
         var issueDate = document.getElementById('issue_date').value.trim();
@@ -95,35 +120,43 @@
             formData.append("template", template);
         }
 
+        var spinner = document.getElementById('loadingSpinner');
+        var previewImage = document.getElementById('previewImage');
+        spinner.style.display = "block";
+        previewImage.style.display = "none";
+
         fetch("/preview", {
             method: "POST",
             body: formData
-        }).then(function(response) {
+        }).then(function (response) {
             if (response.ok) {
                 return response.blob();
             } else {
                 throw new Error('Ошибка при генерации предпросмотра.');
             }
-        }).then(function(blob) {
-            var previewImage = document.getElementById('previewImage');
+        }).then(function (blob) {
             var url = URL.createObjectURL(blob);
             previewImage.src = url;
             previewImage.style.display = "block";
-        }).catch(function(error) {
+        }).catch(function (error) {
             alert(error.message);
+        }).finally(function () {
+            spinner.style.display = "none";
         });
     });
-</script>
-<script>
-    // Если модальное окно есть на странице, автоматически открыть его
+
+    // Убираем автоматическое открытие модального окна с ошибкой
     window.addEventListener("load", function () {
-        var errorModal = document.getElementById("errorModal");
-        if (errorModal) {
-            var modal = new bootstrap.Modal(errorModal);
-            modal.show();
+        // Проверяем, есть ли ошибка
+        var errorMessage = "{{ error_message or '' }}";  // если error_message None, ставим пустую строку
+
+        // Если ошибка есть, показываем модальное окно
+        if (errorMessage) {
+            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            document.getElementById('error-message').innerText = errorMessage; // Вставляем текст ошибки
+            errorModal.show();
         }
     });
 </script>
-
 </body>
 </html>
