@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, jsonify
 from PIL import Image, ImageDraw, ImageFont
 import os
 from datetime import datetime
@@ -22,15 +22,16 @@ if not os.path.exists(TEMPLATES_FOLDER):
 male_names = [
     "Анатолий", "Алексей", "Александр", "Дмитрий", "Иван", "Михаил", "Тигран", "Владимир", "Евгений", "Сергей",
     "Петр", "Константин", "Никита", "Андрей", "Роман", "Геннадий", "Вячеслав", "Виталий", "Олег", "Валерий",
-    "Станислав", "Ярослав", "Леонид", "Максим", "Игорь", "Юрий", "Артем", "Егор", "Аркадий", "Денис", "Кирилл"
+    "Станислав", "Ярослав", "Леонид", "Максим", "Игорь", "Юрий", "Артем", "Егор", "Аркадий", "Денис", "Кирилл",
+    "Павел", "Армен", "Самвел"
 ]
 
 female_names = [
     "Ольга", "Марина", "Ирина", "Анна", "Елена", "Наталья", "Татьяна", "Юлия", "Светлана", "Людмила", "Виктория",
     "Дарина", "София", "Анастасия", "Алла", "Ксения", "Вероника", "Милана", "Римма", "Евгения", "Елизавета", 
-    "Кристина", "Оксана", "Лариса", "Снежана", "Зоя", "Валентина", "Маргарита", "Марина", "Полина", "Нина",
+    "Кристина", "Оксана", "Лариса", "Снежана", "Зоя", "Валентина", "Маргарита", "Полина", "Нина",
     "Людмила", "Валерия", "Алина", "Алиса", "Галина", "Римма", "Алена", "Юлия", "Диана", "Надежда", "София",
-    "Яна", "Тамара", "Нина", "Екатерина"
+    "Яна", "Тамара", "Нина", "Екатерина", "Александра", "Раиса", "Инга"
 ]
 
 def determine_gender(name):
@@ -89,8 +90,8 @@ def generate_certificate_with_image(user_name, course_title, issue_date, templat
     if gender == 'unknown':
         # Нейтральная формулировка
         draw.text((400, 800), "Данный сертификат подтверждает успешное завершение курса", font=font_regular, fill=text_color)
-        draw.text((400, 1000), f"Слушатель: {user_name}", font=font_regular, fill=text_color)
-        draw.text((400, 1200), course_title, font=font_bold, fill=accent_color)
+        draw.text((400, 1000), course_title, font=font_bold, fill=accent_color)
+        draw.text((400, 1200), f"Слушатель: {user_name}", font=font_regular, fill=text_color)
         draw.text((400, 2000), f"Дата выдачи: {formatted_date}", font=font_regular, fill=text_color)
     else:
         draw.text((400, 800), "Этот сертификат подтверждает, что", font=font_regular, fill=text_color)
@@ -187,7 +188,7 @@ def preview():
         return send_file(output_filename, mimetype='image/jpeg')
         
     except Exception as e:
-        return f"Error generating preview: {str(e)}"
+        return jsonify({"error": str(e)}), 500  # Отправляем ошибку с кодом 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
